@@ -1,4 +1,4 @@
-# videoplayer_questionnaire
+# coding software for circletime
 OU video player
 
 When installing pyqt5 to develop with this package or run it in general and you are using Windows 10. It may be necessary to install K-lite codecs before you can actually get video playing in the window.
