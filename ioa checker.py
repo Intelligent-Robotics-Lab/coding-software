@@ -1,3 +1,4 @@
+from dataclasses import replace
 from tracemalloc import start
 import pandas as pd
 import sys
@@ -20,7 +21,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.ui.pushButton_2.clicked.connect(self.csv_two)
         self.ui.pushButton_3.clicked.connect(self.calculate)
         self.ui.comboBox.currentTextChanged.connect(self.text_changed)
-
     def csv_one(self):
         try:
             file_name, _ = QFileDialog.getOpenFileName(
@@ -47,6 +47,10 @@ class Window(QMainWindow, Ui_MainWindow):
         # try:
         df1 = pd.read_csv(self.ui.lineEdit.text())
         df2 = pd.read_csv(self.ui.lineEdit_2.text())
+        df1['Label'] = df1['Label'].str.lower()
+        df2['Label'] = df2['Label'].str.lower()
+        df1['Label'] = df1['Label'].str.strip()
+        df2['Label'] = df2['Label'].str.strip()
         # print(self.metric)
         if self.metric == 'Performance' or self.metric == 'Communication':
             freq_df1 = df1.shape[0]
@@ -65,11 +69,6 @@ class Window(QMainWindow, Ui_MainWindow):
                 self.ui.textEdit.setText("N/A")
 
         elif self.metric == 'Affect (Total)':
-            df1['Label'] = df1['Label'].str.lower()
-            df2['Label'] = df2['Label'].str.lower()
-            df1['Label'] = df1['Label'].str.strip()
-            df2['Label'] = df2['Label'].str.strip()
-
             start_interval = int(self.ui.lineEdit_5.text())
             end_interval = int(self.ui.lineEdit_6.text())
             df1_unique_intervals = list(df1['Interval'].unique())
@@ -165,6 +164,67 @@ class Window(QMainWindow, Ui_MainWindow):
             else:
                 self.ui.textEdit.setText("N/A")
 
+        elif self.metric == 'Engagement':
+            start_interval = int(self.ui.lineEdit_5.text())
+            end_interval = int(self.ui.lineEdit_6.text())
+            df1 = df1[(df1['Interval'] >= start_interval)
+                      & (df1['Interval'] <= end_interval)]
+            df2 = df2[(df2['Interval'] >= start_interval)
+                      & (df2['Interval'] <= end_interval)]
+            df1_unique_labels = sorted(list(df1['Label'].unique()))
+            df2_unique_labels = sorted(list(df2['Label'].unique()))
+            total_time = (end_interval - start_interval + 1) * 10
+            # print(df1_unique_labels)
+            # print(df2_unique_labels)
+            replace_list = ["bt/peers","instructor/screen/on task"]
+            df1['Label'].replace(df1_unique_labels, replace_list, inplace=True)
+            df2['Label'].replace(df2_unique_labels, replace_list, inplace=True)
+            # print(df1)
+            # print(df2)
+            df1_fixed_labels = sorted(list(df1['Label'].unique()))
+            df2_fixed_labels = sorted(list(df2['Label'].unique()))
+            times_1 = {}
+            times_2 = {}
+            for label in df1_fixed_labels:
+                df_label = df1[df1['Label'] == label].copy()
+                # print(df_label)
+                df_label['time held'] = df_label['Time Released'] - df_label['Time Pressed'] 
+                time_held = round(df_label['time held'].sum(),4)
+                times_1[label] = time_held
+            
+            for label in df2_fixed_labels:
+                df_label = df2[df2['Label'] == label].copy()
+                # print(df_label)
+                df_label['time held'] = df_label['Time Released'] - df_label['Time Pressed'] 
+                time_held = round(df_label['time held'].sum(),4)
+                times_2[label] = time_held
+            
+            times_1['off target'] = round(total_time - sum(times_1.values()),4)
+            times_2['off target'] = round(total_time - sum(times_2.values()),4)
+
+            ioa_scores_eng = {}
+            for key in times_1.keys():
+                if times_1[key] > times_2[key]:
+                    ioa_scores_eng[key] = round(times_2[key] / times_1[key],4)
+                else:
+                    ioa_scores_eng[key] = round(times_1[key] / times_2[key],4)
+            text_edit_str = ""
+            for k,v in ioa_scores_eng.items():
+                ioa_value = k + ': ' + str(v) +'\n'
+                text_edit_str += ioa_value
+                if v < float(self.ui.lineEdit_4.text()):
+                    self.ui.textEdit.setText(
+                        "fix ioa score. Recode the video together")
+            self.ui.textEdit_2.setText(text_edit_str)
+            if self.ui.textEdit.toPlainText() == "":
+                self.ui.textEdit.setText("N/A")
+        
+                #print(k, v,sep=': ')
+            # print(times_1)
+            # print(times_2)
+            # print(ioa_scores_eng)
+
+            
         # except:
         #     error_dialog = QErrorMessage()
         #     error_dialog.showMessage('Check inputs, something went wrong')
