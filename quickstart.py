@@ -11,7 +11,9 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
 import io
 import pprint as pprint
-from datetime import date
+import datetime
+import os
+
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/drive.activity", "https://www.googleapis.com/auth/drive","https://www.googleapis.com/auth/drive.readonly"]
@@ -22,6 +24,7 @@ def main():
 
     Prints information about the last 10 events that occured the user's Drive.
     """
+    import time as t
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -43,13 +46,20 @@ def main():
     service = build('driveactivity', 'v2', credentials=creds)
     service_drive = build('drive','v3', credentials=creds)
     date_wanted = input("Enter in date (YYYY-MM-DD): ")
+    # date_wanted_split = date_wanted.split('-')
+    # date_wanted_dt = datetime.date(int(date_wanted_split[0]),int(date_wanted_split[1]),int(date_wanted_split[2]))
+    # date_wanted_ut = t.mktime(date_wanted_dt.timetuple())
+    # date_wanted_next_ut = date_wanted_ut + (24*3600)
+    folder_path = r"C:\Users\nhuan\Desktop\coding-data" + "\\" + date_wanted
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
     # today = date.today().strftime("%Y-%m-%d")
     # print(today)
     # print(type(today))
     # Call the Drive Activity API
     try:
         results = service.activity().query(body={
-            'pageSize': 5,
+            'pageSize': 7,
             "ancestorName": "items/1w62nXda-DNUfRBYZlD9MdXIDIDtoR3-r"
         }).execute()
         activities = results.get('activities', [])
@@ -88,7 +98,7 @@ def main():
                         continue
                     else:
                         request = service_drive.files().get_media(fileId=file_id)
-                        fh = io.FileIO(r"C:\Users\nhuan\Downloads" + "\\" + file_name,'wb')
+                        fh = io.FileIO(folder_path + "\\" + file_name,'wb')
                         downloader = MediaIoBaseDownload(fh, request)
                         done = False
                         while done is False:
