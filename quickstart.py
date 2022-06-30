@@ -59,7 +59,7 @@ def main():
     # Call the Drive Activity API
     try:
         results = service.activity().query(body={
-            'pageSize': 7,
+            'pageSize': 20,
             "ancestorName": "items/1w62nXda-DNUfRBYZlD9MdXIDIDtoR3-r"
         }).execute()
         activities = results.get('activities', [])

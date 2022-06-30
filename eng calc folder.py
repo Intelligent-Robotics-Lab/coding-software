@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 
-folder_path = r"C:\Users\nhuan\Desktop\coding-data\2022-06-21"
+folder_path = r"C:\Users\nhuan\Desktop\coding-data\2022-06-29"
 for file in os.listdir(folder_path):
     f = os.path.join(folder_path,file)
     if os.path.isfile(f):
@@ -15,7 +15,8 @@ for file in os.listdir(folder_path):
         replace_list = ["bt/peers","instructor/screen/on task"]
         df = df[(df['Interval'] >= start_interval)
                             & (df['Interval'] <= end_interval)]
-        df.replace(unique_labels, replace_list, inplace=True)
+        if len(unique_labels) > 1:
+            df.replace(unique_labels, replace_list, inplace=True)
 
         fixed_labels = sorted(list(df['Label'].unique()))
         for label in fixed_labels:
