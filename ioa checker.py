@@ -177,8 +177,10 @@ class Window(QMainWindow, Ui_MainWindow):
             # print(df1_unique_labels)
             # print(df2_unique_labels)
             replace_list = ["bt/peers","instructor/screen/on task"]
-            df1['Label'].replace(df1_unique_labels, replace_list, inplace=True)
-            df2['Label'].replace(df2_unique_labels, replace_list, inplace=True)
+            if len(df1_unique_labels) > 1:
+                df1['Label'].replace(df1_unique_labels, replace_list, inplace=True)
+            if len(df1_unique_labels) > 1:
+                df2['Label'].replace(df2_unique_labels, replace_list, inplace=True)
             # print(df1)
             # print(df2)
             df1_fixed_labels = sorted(list(df1['Label'].unique()))
