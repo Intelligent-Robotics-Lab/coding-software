@@ -53,11 +53,11 @@ def main():
             column = list(chain.from_iterable(values[i]['values']))
             columns_list.append(column)
         zipped_values = list(zip(*columns_list))
-        pprint.pprint(zipped_values)
+        #pprint.pprint(zipped_values)
         start_intervals = list(chain.from_iterable(values[3]['values']))
         end_intervals = list(chain.from_iterable(values[4]['values']))
         interval_ranges = list(zip(start_intervals, end_intervals))
-        pprint.pprint(interval_ranges)
+        #pprint.pprint(interval_ranges)
         
     except HttpError as error:
         # TODO(developer) - Handle errors from drive API.
@@ -65,7 +65,7 @@ def main():
     
 
 
-    folder_path = r"C:\Users\nhuan\Desktop\coding-data\2022-07-01"
+    folder_path = r"C:\Users\nhuan\Desktop\coding-data\2022-07-08"
     for file in os.listdir(folder_path):
         file_split = file.split('-')
         if len(file_split[0]) == 1:
@@ -80,6 +80,7 @@ def main():
         index = zipped_values.index(combine_tuple)
         # print(index)
         start_interval = int(start_intervals[index])
+        #print(start_interval)
         end_interval = int(end_intervals[index])
         total_time = (end_interval - start_interval + 1) * 10
         # 11-17-21-H-1-WJH-ENG-MR-W

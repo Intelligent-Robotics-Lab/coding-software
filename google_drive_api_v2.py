@@ -9,11 +9,12 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
+
+from itertools import chain
 import io
 
 # If modifying these scopes, delete the file token.json.
-SCOPES = ["https://www.googleapis.com/auth/drive","https://www.googleapis.com/auth/drive.readonly"]
-
+SCOPES = ["https://www.googleapis.com/auth/drive","https://www.googleapis.com/auth/drive.readonly","https://www.googleapis.com/auth/spreadsheets","https://www.googleapis.com/auth/drive.activity"]
 
 def main():
     """Shows basic usage of the Drive v3 API.
@@ -49,10 +50,9 @@ def main():
 
         # Call the Drive v3 API
         results = service.files().list(
-            pageSize=15, fields="nextPageToken, files(id, name)", corpora='user', q=query_name, spaces='drive').execute()
+            pageSize=30, fields="nextPageToken, files(id, name)", corpora='user', q=query_name, spaces='drive').execute()
         items = results.get('files', [])
         
-
         if not items:
             print('No files found.')
             return
@@ -69,9 +69,14 @@ def main():
                 print ("Download %d%%." % int(status.progress() * 100))
             print(file_name + '\t' + date_wanted + '\t' + "file id: " + file_id)
             # print(u'{0} ({1})'.format(item['name'], item['id']))
+        
+
+        
     except HttpError as error:
         # TODO(developer) - Handle errors from drive API.
         print(f'An error occurred: {error}')
+    
+
 
 
 if __name__ == '__main__':
