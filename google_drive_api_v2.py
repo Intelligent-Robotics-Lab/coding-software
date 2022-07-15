@@ -37,12 +37,14 @@ def main():
         # Save the credentials for the next run
         with open('token.json', 'w') as token:
             token.write(creds.to_json())
-    first_date = input("Enter previous date (YYYY-MM-DD): ")
     date_wanted = input("Enter date wanted (YYYY-MM-DD): ")
+    date_wanted_split = date_wanted.split('-')
+    date_wanted_split[-1] = str(int(date_wanted_split[-1]) - 1)
+    first_date = "-".join(date_wanted_split)
     date_before_wanted = 'modifiedTime > ' + "'" + first_date + "T23:00:00'"
     query_name = 'modifiedTime < ' + "'" + date_wanted + "T23:00:00'" + ' and ' + date_before_wanted + ' and mimeType = ' + "'text/csv'"
     #print(query_name)
-    folder_path = r"C:\Users\nhuan\Desktop\coding-data" + "\\" + date_wanted
+    folder_path = r"C:\Users\Clinic\Desktop\grab-data" + "\\" + date_wanted
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
     try:
