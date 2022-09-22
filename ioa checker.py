@@ -204,9 +204,12 @@ class Window(QMainWindow, Ui_MainWindow):
             times_1['off target'] = round(total_time - sum(times_1.values()),4)
             times_2['off target'] = round(total_time - sum(times_2.values()),4)
 
+            times_1['on target'] = round(total_time - times_1['off target'],4)
+            times_2['on target'] = round(total_time - times_2['off target'],4)
+
             ioa_scores_eng = {}
             for key in times_1.keys():
-                if times_1[key] > times_2[key]:
+                if times_1[key] > times_2[key]: # total time value of label ex: {'on target':69.420}
                     ioa_scores_eng[key] = round(times_2[key] / times_1[key],4)
                 else:
                     ioa_scores_eng[key] = round(times_1[key] / times_2[key],4)
@@ -214,7 +217,8 @@ class Window(QMainWindow, Ui_MainWindow):
             for k,v in ioa_scores_eng.items():
                 ioa_value = k + ': ' + str(v) +'\n'
                 text_edit_str += ioa_value
-                if v < float(self.ui.lineEdit_4.text()):
+                # fix line to correct ioa score for only 'on target' and 'off target' label
+                if v < float(self.ui.lineEdit_4.text()) and (k == 'off target' or k == 'on target'):
                     self.ui.textEdit.setText(
                         "fix ioa score. Recode the video together")
             self.ui.textEdit_2.setText(text_edit_str)
