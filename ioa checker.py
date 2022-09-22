@@ -216,18 +216,10 @@ class Window(QMainWindow, Ui_MainWindow):
 
             ioa_scores_eng = {}
             for key in times_1.keys():
-<<<<<<< HEAD
                 if times_1[key] > times_2[key]: # total time value of label ex: {'on target':69.420}
                     ioa_scores_eng[key] = round(times_2[key] / times_1[key],4)
-=======
-                if key in times_2.keys():
-                    if times_1[key] > times_2[key]:
-                        ioa_scores_eng[key] = round(
-                            times_2[key] / times_1[key], 4)
-                    else:
-                        ioa_scores_eng[key] = round(
-                            times_1[key] / times_2[key], 4)
->>>>>>> 9fdfdee01ae8583f62b97384103b733cca117dc3
+                elif times_1[key] < times_2[key]:
+                    ioa_scores_eng[key] = round(times_1[key] / times_2[key],4)
                 else:
                     ioa_scores_eng[key] = 0
             if len(times_1.keys()) < len(times_2.keys()):
