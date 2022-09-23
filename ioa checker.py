@@ -220,6 +220,8 @@ class Window(QMainWindow, Ui_MainWindow):
                     ioa_scores_eng[key] = round(times_2[key] / times_1[key],4)
                 elif times_1[key] < times_2[key]:
                     ioa_scores_eng[key] = round(times_1[key] / times_2[key],4)
+                elif times_1[key] == times_2[key]:
+                    ioa_scores_eng[key] = 1
                 else:
                     ioa_scores_eng[key] = 0
             if len(times_1.keys()) < len(times_2.keys()):
