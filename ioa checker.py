@@ -77,9 +77,9 @@ class Window(QMainWindow, Ui_MainWindow):
             # df2_unique_intervals = list(df2.unique())
 
             # IOA backchannel = matching intevals/max # of coded intervals between the 2 coders in each submetric
-            # num of coded intervals file 1
+            # num of unique coded intervals file 1
             df1_num_ci = len(df1['Interval'].unique())
-            # num of coded intervals file 2
+            # num of unique coded intervals file 2
             df2_num_ci = len(df2['Interval'].unique())
             # max number of coded intervals between two files
             denom = max(df1_num_ci, df2_num_ci)
@@ -97,6 +97,13 @@ class Window(QMainWindow, Ui_MainWindow):
             # list of tuples with label and interval Ex: [(Label, Interval), (Label_2, Interval_2), (Label_2, Interval_2)]
             df1_val_int = list(set(zip(df1['Label'], df1['Interval'])))
             df2_val_int = list(set(zip(df2['Label'], df2['Interval'])))
+
+            # difference between 2 lists
+            discrepancies = list(
+                set(df1_val_int).symmetric_difference(set(df2_val_int)))
+            discrepancies = sorted(discrepancies, key=lambda x: x[1])
+
+            print(discrepancies)
 
             # Make dictionary with key value pairs as label,total count of label. Ex: {'p': 3, 'n': 1, 'b': 3}
             dict_values_df1 = {}
@@ -137,17 +144,24 @@ class Window(QMainWindow, Ui_MainWindow):
                 if val in df2_val_int:
                     matching_values_dict[val[0]] += 1
 
-            for key in dict_values_df1.keys():
-                if key not in dict_values_df2.keys():
-                    max_submetric_ci_dict[key] = dict_values_df1[key]
-                else:
+            df1_keys = list(set(dict_values_df1.keys()))
+            df2_keys = list(set(dict_values_df2.keys()))
+            union_keys = sorted(df1_keys + df2_keys)
+
+            for key in union_keys:
+                if key in dict_values_df1.keys() and key in dict_values_df2.keys():
                     max_submetric_ci_dict[key] = max(
                         dict_values_df1[key], dict_values_df2[key])
+                elif key in dict_values_df1.keys() and (key not in dict_values_df2.keys()):
+                    max_submetric_ci_dict[key] = dict_values_df1[key]
+                elif key not in dict_values_df1.keys() and key in dict_values_df2.keys():
+                    max_submetric_ci_dict[key] = dict_values_df2[key]
+
             print('matching values for submetric:', matching_values_dict)
             print('max intervals for submetric', max_submetric_ci_dict)
 
-            for key in matching_values_dict.keys():
-                if key in max_submetric_ci_dict.keys():
+            for key in sorted(matching_values_dict.keys()):
+                if key in sorted(max_submetric_ci_dict.keys()):
                     if matching_values_dict[key] < max_submetric_ci_dict[key]:
                         ioa_val = matching_values_dict[key] / \
                             max_submetric_ci_dict[key]
@@ -160,6 +174,7 @@ class Window(QMainWindow, Ui_MainWindow):
             print('ioa values:', ioa_values_dict)
             ioa_text = ioa_values_dict
             self.ui.textEdit_2.setText(str(ioa_text))
+            self.ui.textEdit.setText("Discrepancies: " + str(discrepancies))
             # Note that there's not going to be any output for intervals to finx
 
             # intersection_list = []
