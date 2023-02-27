@@ -162,6 +162,11 @@ p, li { white-space: pre-wrap; }
          <string>Performance</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>IOA Backchannel</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>
