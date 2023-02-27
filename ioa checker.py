@@ -48,6 +48,8 @@ class Window(QMainWindow, Ui_MainWindow):
         # try:
         df1 = pd.read_csv(self.ui.lineEdit.text())
         df2 = pd.read_csv(self.ui.lineEdit_2.text())
+        # print(df1)
+        # print(df2)
         df1['Label'] = df1['Label'].str.lower()
         df2['Label'] = df2['Label'].str.lower()
         df1['Label'] = df1['Label'].str.strip()
@@ -68,6 +70,105 @@ class Window(QMainWindow, Ui_MainWindow):
                     "fix ioa score. Recode the video together")
             else:
                 self.ui.textEdit.setText("N/A")
+
+        elif self.metric == 'IOA Backchannel':
+            # time pressed, time released, label, interval
+            # df1_unique_intervals = list(df1.unique())
+            # df2_unique_intervals = list(df2.unique())
+
+            # IOA backchannel = matching intevals/max # of coded intervals between the 2 coders in each submetric
+            # num of coded intervals file 1
+            df1_num_ci = len(df1['Interval'].unique())
+            # num of coded intervals file 2
+            df2_num_ci = len(df2['Interval'].unique())
+            # max number of coded intervals between two files
+            denom = max(df1_num_ci, df2_num_ci)
+            # unique labels file 1
+            df1_unique_labels = sorted(df1['Label'].unique())
+            # unique lables file 2
+            df2_unique_labels = sorted(df2['Label'].unique())
+
+            print(df1_unique_labels)
+            print(df2_unique_labels)
+            # print(denom)
+            # print(df1_num_ci)
+            # print(df2_num_ci)
+
+            # list of tuples with label and interval Ex: [(Label, Interval), (Label_2, Interval_2), (Label_2, Interval_2)]
+            df1_val_int = list(set(zip(df1['Label'], df1['Interval'])))
+            df2_val_int = list(set(zip(df2['Label'], df2['Interval'])))
+
+            # Make dictionary with key value pairs as label,total count of label. Ex: {'p': 3, 'n': 1, 'b': 3}
+            dict_values_df1 = {}
+            dict_values_df2 = {}
+            # Instantiate an dictionary with the labels and total number of matching values between files. Set as 0 intially.
+            matching_values_dict = {}
+            # Instantiate a dictionary with max num of coded intervals in submetric
+            max_submetric_ci_dict = {}
+            # instantiate a dictionary with ioa values
+            ioa_values_dict = {}
+            union_unique_labels = sorted(
+                list(set(df1_unique_labels)) + list(set(df2_unique_labels)))
+            for val in union_unique_labels:
+                max_submetric_ci_dict[val] = 0
+
+            for label in df1_unique_labels:
+                count = 0
+                for val in df1_val_int:
+                    if label == val[0]:
+                        count += 1
+                dict_values_df1[label] = count
+                if label not in matching_values_dict:
+                    matching_values_dict[label] = 0
+
+            for label in df2_unique_labels:
+                count = 0
+                for val in df2_val_int:
+                    if label == val[0]:
+                        count += 1
+                dict_values_df2[label] = count
+                if label not in matching_values_dict:
+                    matching_values_dict[label] = 0
+
+            print('number of values for submetric file1', dict_values_df1)
+            print('number of values for submetric file2', dict_values_df2)
+           # print(matching_values_dict)
+            for val in df1_val_int:
+                if val in df2_val_int:
+                    matching_values_dict[val[0]] += 1
+
+            for key in dict_values_df1.keys():
+                if key not in dict_values_df2.keys():
+                    max_submetric_ci_dict[key] = dict_values_df1[key]
+                else:
+                    max_submetric_ci_dict[key] = max(
+                        dict_values_df1[key], dict_values_df2[key])
+            print('matching values for submetric:', matching_values_dict)
+            print('max intervals for submetric', max_submetric_ci_dict)
+
+            for key in matching_values_dict.keys():
+                if key in max_submetric_ci_dict.keys():
+                    if matching_values_dict[key] < max_submetric_ci_dict[key]:
+                        ioa_val = matching_values_dict[key] / \
+                            max_submetric_ci_dict[key]
+                        ioa_values_dict[key] = ioa_val
+                    else:
+                        ioa_val = max_submetric_ci_dict[key] / \
+                            matching_values_dict[key]
+                        ioa_values_dict[key] = ioa_val
+
+            print('ioa values:', ioa_values_dict)
+            ioa_text = ioa_values_dict
+            self.ui.textEdit_2.setText(str(ioa_text))
+            # Note that there's not going to be any output for intervals to finx
+
+            # intersection_list = []
+            # for val in df1_val_int:
+            #     if val in df2_val_int:
+            #         intersection_list.append(val)
+            # print(df1_val_int)
+            # print(df2_val_int)
+            # print(intersection_list)
 
         elif self.metric == 'Affect (Total)':
             start_interval = int(self.ui.lineEdit_5.text())
@@ -211,17 +312,15 @@ class Window(QMainWindow, Ui_MainWindow):
             times_2['off target'] = round(
                 total_time - sum(times_2.values()), 4)
 
-            times_1['on target'] = round(total_time - times_1['off target'],4)
-            times_2['on target'] = round(total_time - times_2['off target'],4)
-
             ioa_scores_eng = {}
             for key in times_1.keys():
-                if times_1[key] > times_2[key]: # total time value of label ex: {'on target':69.420}
-                    ioa_scores_eng[key] = round(times_2[key] / times_1[key],4)
-                elif times_1[key] < times_2[key]:
-                    ioa_scores_eng[key] = round(times_1[key] / times_2[key],4)
-                elif times_1[key] == times_2[key]:
-                    ioa_scores_eng[key] = 1
+                if key in times_2.keys():
+                    if times_1[key] > times_2[key]:
+                        ioa_scores_eng[key] = round(
+                            times_2[key] / times_1[key], 4)
+                    else:
+                        ioa_scores_eng[key] = round(
+                            times_1[key] / times_2[key], 4)
                 else:
                     ioa_scores_eng[key] = 0
             if len(times_1.keys()) < len(times_2.keys()):
@@ -234,8 +333,7 @@ class Window(QMainWindow, Ui_MainWindow):
             for k, v in ioa_scores_eng.items():
                 ioa_value = k + ': ' + str(v) + '\n'
                 text_edit_str += ioa_value
-                # fix line to correct ioa score for only 'on target' and 'off target' label
-                if v < float(self.ui.lineEdit_4.text()) and (k == 'off target' or k == 'on target'):
+                if v < float(self.ui.lineEdit_4.text()):
                     self.ui.textEdit.setText(
                         "fix ioa score. Recode the video together")
             self.ui.textEdit_2.setText(text_edit_str)
