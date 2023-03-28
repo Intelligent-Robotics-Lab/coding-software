@@ -275,11 +275,12 @@ class Window(QMainWindow, Ui_MainWindow):
             fix_int = list(
                 sorted(set(df1_unique_val).symmetric_difference(set(df2_unique_val))))
             res = sorted(set(list(zip(*fix_int))[-1]))
-            if total_ioa < float(self.ui.lineEdit_4.text()):
-                self.ui.textEdit.setText(
-                    "fix ioa score. Recode the video together. These intervals:" + str(res))
-            else:
-                self.ui.textEdit.setText("N/A")
+            self.ui.textEdit.setText(str(res))
+            # if total_ioa < float(self.ui.lineEdit_4.text()):
+            #     self.ui.textEdit.setText(
+            #         "fix ioa score. Recode the video together. These intervals:" + str(res))
+            # else:
+            #     self.ui.textEdit.setText("N/A")
 
         elif self.metric == 'Engagement':
             start_interval = int(self.ui.lineEdit_5.text())
