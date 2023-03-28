@@ -1377,6 +1377,7 @@ class FinalTable(QWidget):
             for key in filler_words_ps.keys():
                 filler_words_ps[key] = str(
                     self.total_time / filler_words_ps[key]) + " sec per " + str(key)
+            filler_words_ps['Total Time'] = self.total_time
             df_2 = pd.DataFrame.from_dict([filler_words_ps])
             print(df_2)
             concat_data = pd.concat([df, df_2], axis=1)
