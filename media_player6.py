@@ -59,6 +59,11 @@ def ms_fix(ms):
         return "{}:{}".format(minutes, seconds)
 
 
+def get_secs(str_time):
+    m, s = str_time.split(":")
+    return int(m) * 60 + int(s)
+
+
 class InputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -184,6 +189,7 @@ class media_player(QWidget):
         self.cMetrics.addItem("Communication")
         self.cMetrics.addItem("Compliance")
         self.cMetrics.addItem("Performance")
+        self.cMetrics.addItem("Filler Words")
 
         # setup slider
         self.slider.setOrientation(Qt.Horizontal)
@@ -522,12 +528,20 @@ class video_player(QWidget):
         # save_button.clicked.connect(self.save_data)
 
         # Text box for entering in start and end intervals for data collection
-        self.start_interval_text = QLabel('Start Int')
-        self.start_interval_input = QLineEdit()
-        self.start_interval_input.setMaximumWidth(30)
-        self.end_interval_text = QLabel('End Int')
-        self.end_interval_input = QLineEdit()
-        self.end_interval_input.setMaximumWidth(30)
+        if self.metric != 'Filler Words':
+            self.start_interval_text = QLabel('Start Int')
+            self.start_interval_input = QLineEdit()
+            self.start_interval_input.setMaximumWidth(30)
+            self.end_interval_text = QLabel('End Int')
+            self.end_interval_input = QLineEdit()
+            self.end_interval_input.setMaximumWidth(30)
+        else:
+            self.starting_time = QLabel('Start Time')
+            self.starting_time_input = QLineEdit()
+            self.starting_time_input.setMaximumWidth(38)
+            self.ending_time = QLabel('End Time')
+            self.ending_time_input = QLineEdit()
+            self.ending_time_input.setMaximumWidth(38)
 
         # If compliance is the metric add start compliance and end compliance buttons
         self.start_comp_button = QPushButton("Start Comp")
@@ -582,6 +596,15 @@ class video_player(QWidget):
             hboxLayout_buttons.addWidget(self.end_comp_button)
             vboxLayout.addLayout(hboxLayout)
             vboxLayout.addLayout(hboxLayout_buttons)
+        elif self.metric == 'Filler Words':
+            hboxLayout.addWidget(playBtn)
+            hboxLayout.addWidget(pauseBtn)
+            hboxLayout.addWidget(end_collect)
+            hboxLayout.addWidget(self.starting_time)
+            hboxLayout.addWidget(self.starting_time_input)
+            hboxLayout.addWidget(self.ending_time)
+            hboxLayout.addWidget(self.ending_time_input)
+            vboxLayout.addLayout(hboxLayout)
         else:
             hboxLayout.addWidget(playBtn)
             hboxLayout.addWidget(pauseBtn)
@@ -1065,18 +1088,34 @@ border-radius: 4px;
             if len(self.pop_up._temp) > 0:
                 for row in self.pop_up._convertedData:
                     self.completeList.append(row)
-            if len(self.completeList) < 2:
-                start_end_int_string = self.start_interval_input.text() + '-' + \
-                    self.end_interval_input.text()
-                self.completeList.append(
-                    ['N/A', 'N/A', 'No Data Coded', start_end_int_string])
-                self.finalWindow = FinalTable(
-                    self.completeList[1:], self.metric, self.interval_list, int(self.start_interval_input.text()), int(self.end_interval_input
-                                                                                                                       .text()))
+
+            if self.metric != 'Filler Words':
+                if len(self.completeList) < 2:
+                    start_end_int_string = self.start_interval_input.text() + '-' + \
+                        self.end_interval_input.text()
+                    self.completeList.append(
+                        ['N/A', 'N/A', 'No Data Coded', start_end_int_string])
+                    self.finalWindow = FinalTable(
+                        self.completeList[1:], self.metric, self.interval_list, int(self.start_interval_input.text()), int(self.end_interval_input
+                                                                                                                           .text()))
+                else:
+                    self.finalWindow = FinalTable(
+                        self.completeList[1:], self.metric, self.interval_list, int(self.start_interval_input.text()), int(self.end_interval_input
+                                                                                                                           .text()))
             else:
-                self.finalWindow = FinalTable(
-                    self.completeList[1:], self.metric, self.interval_list, int(self.start_interval_input.text()), int(self.end_interval_input
-                                                                                                                       .text()))
+                if len(self.completeList) < 2:
+                    start_end_time = get_secs(
+                        self.ending_time_input.text()) - get_secs(self.starting_time_input.text())
+                    self.completeList.append(
+                        ['N/A', 'N/A', 'No Data Coded', str(start_end_time)])
+                    self.finalWindow = FinalTable(
+                        self.completeList[1:], self.metric, self.interval_list, start_end_time)
+                else:
+                    start_end_time = get_secs(
+                        self.ending_time_input.text()) - get_secs(self.starting_time_input.text())
+                    self.finalWindow = FinalTable(
+                        self.completeList[1:], self.metric, self.interval_list, start_end_time)
+
             self.frequencyCounter = []
 
         except:
@@ -1257,21 +1296,26 @@ class FinalTable(QWidget):
         # instance variable to store interval list
         self.interval_list = interval_list
         # instance variable to store number of intervals
-        self.start_interval = args[0]
-        self.end_interval = args[1]
-        if args:
-            self.num_intervals = self.end_interval - \
-                self.start_interval + 1
+        if self.metric != 'Filler Words':
+            self.start_interval = args[0]
+            self.end_interval = args[1]
+            if args:
+                self.num_intervals = self.end_interval - \
+                    self.start_interval + 1
+            else:
+                self.num_intervals = len(self.interval_list) - 1
+            # make empty dataframe if data is empty list
+            df = pd.DataFrame(data)
+            if not df.empty:
+                df.sort_values(by=0, inplace=True)
+            if is_numeric_dtype(df[3]):
+                df = df[(df[3] >= self.start_interval) &
+                        (df[3] <= self.end_interval)]
+            self.new_data = df.values.tolist()
         else:
-            self.num_intervals = len(self.interval_list) - 1
-        # make empty dataframe if data is empty list
-        df = pd.DataFrame(data)
-        if not df.empty:
-            df.sort_values(by=0, inplace=True)
-        if is_numeric_dtype(df[3]):
-            df = df[(df[3] >= self.start_interval) &
-                    (df[3] <= self.end_interval)]
-        self.new_data = df.values.tolist()
+            self.total_time = args[0]
+            df = pd.DataFrame(data)
+            self.new_data = df.values.tolist()
 
         self.setWindowTitle("Final Save Table")
         self.resize(700, 500)
@@ -1328,6 +1372,16 @@ class FinalTable(QWidget):
         #print(self.folder_save_name.text() + '/' + self.new_file_name)
         df = pd.DataFrame(self.new_data, columns=[
                           'Time Pressed', 'Time Released', 'Label', 'Interval'])
+        if self.metric == 'Filler Words':
+            filler_words_ps = dict(df['Label'].value_counts())
+            for key in filler_words_ps.keys():
+                filler_words_ps[key] = str(
+                    self.total_time / filler_words_ps[key]) + " sec per " + str(key)
+            df_2 = pd.DataFrame.from_dict([filler_words_ps])
+            print(df_2)
+            concat_data = pd.concat([df, df_2], axis=1)
+            df = concat_data
+        print(df)
         # df = df[(df['Interval'] >= self.start_interval) &
         #         (df['Interval'] <= self.end_interval)]
         try:
