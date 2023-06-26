@@ -2,6 +2,7 @@ from dataclasses import replace
 from tracemalloc import start
 import pandas as pd
 import sys
+from sklearn.metrics import cohen_kappa_score, confusion_matrix
 from PyQt5.QtWidgets import (
     QApplication, QDialog, QMainWindow, QMessageBox, QErrorMessage, QFileDialog
 )
@@ -201,7 +202,7 @@ class Window(QMainWindow, Ui_MainWindow):
                     interval = i
                     add_row = {"Time Pressed": time_pressed,
                                "Time Released": time_released, "Label": label, "Interval": interval}
-                    df1 = df1.append(add_row, ignore_index=True)
+                    df1 = df1._append(add_row, ignore_index=True)
 
                 if i not in df2_unique_intervals:
                     time_pressed = (i-1) * 10 + 0.001
@@ -210,72 +211,93 @@ class Window(QMainWindow, Ui_MainWindow):
                     interval = i
                     add_row = {"Time Pressed": time_pressed,
                                "Time Released": time_released, "Label": label, "Interval": interval}
-                    df2 = df2.append(add_row, ignore_index=True)
+                    df2 = df2._append(add_row, ignore_index=True)
 
             df1 = df1[(df1['Interval'] >= start_interval)
                       & (df1['Interval'] <= end_interval)]
             df2 = df2[(df2['Interval'] >= start_interval)
                       & (df2['Interval'] <= end_interval)]
-            df1['zip'] = list(zip(df1['Label'], df1['Interval']))
-            df2['zip'] = list(zip(df2['Label'], df2['Interval']))
-            df1_unique_val = list(df1['zip'].unique())
-            df2_unique_val = list(df2['zip'].unique())
-            df1_neg_count = 0
-            df1_pos_count = 0
-            df1_neut_count = 0
-            df2_neg_count = 0
-            df2_pos_count = 0
-            df2_neut_count = 0
-            pos_ioa = 0
-            neg_ioa = 0
-            neut_ioa = 0
-            for val in df1_unique_val:
-                if val[0] == 'negative':
-                    df1_neg_count += 1
-                elif val[0] == 'positive':
-                    df1_pos_count += 1
-                else:
-                    df1_neut_count += 1
-            for val in df2_unique_val:
-                if val[0] == 'negative':
-                    df2_neg_count += 1
-                elif val[0] == 'positive':
-                    df2_pos_count += 1
-                else:
-                    df2_neut_count += 1
+            
+            df1 = df1.drop_duplicates(subset=['Label','Interval'])
+            df2 = df2.drop_duplicates(subset=['Label','Interval'])
 
-            if df1_neg_count == 0 and df2_neg_count == 0:
-                neg_ioa = 'N/A'
-            elif df1_neg_count < df2_neg_count:
-                neg_ioa = round(df1_neg_count / df2_neg_count, 3)
-            else:
-                neg_ioa = round(df2_neg_count / df1_neg_count, 3)
+            df1 = df1.sort_values(by=['Interval'])
+            df2 = df2.sort_values(by=['Interval'])
 
-            if df1_pos_count == 0 and df2_pos_count == 0:
-                pos_ioa = 'N/A'
-            elif df1_pos_count < df2_pos_count:
-                pos_ioa = round(df1_pos_count / df2_pos_count, 3)
-            else:
-                pos_ioa = round(df2_pos_count / df1_pos_count, 3)
+            df1_labels = df1['Label'].tolist()
+            df2_labels = df2['Label'].tolist()
+            
+            duplicate_df1 = df1[df1.duplicated(subset="Interval",keep=False)]
+            duplicate_df2 = df2[df2.duplicated(subset="Interval",keep=False)]
 
-            if df1_neut_count == 0 and df2_neut_count == 0:
-                neut_ioa = 'N/A'
-            elif df1_neut_count < df2_neut_count:
-                neut_ioa = round(df1_neut_count / df2_neut_count, 3)
-            else:
-                neut_ioa = round(df2_neut_count / df1_neut_count, 3)
+            print(duplicate_df1)
+            print(duplicate_df2)
 
-            count_match = sum(
-                val in df2_unique_val for val in df1_unique_val)
-            total_ioa = round(
-                count_match / (end_interval - start_interval + 1), 3)
-            ioa_text = "Total IOA: " + str(total_ioa) + "\n" + "Positive IOA: " + str(pos_ioa) + "\n" + "Negative IOA: " + str(neg_ioa) + \
-                "\n" + "Neutral IOA: " + str(neut_ioa)
-            self.ui.textEdit_2.setText(ioa_text)
-            fix_int = list(
-                sorted(set(df1_unique_val).symmetric_difference(set(df2_unique_val))))
-            res = sorted(set(list(zip(*fix_int))[-1]))
-            self.ui.textEdit.setText(str(res))
+            # print(confusion_matrix(df1_labels,df2_labels,labels=['positive','negative','neutral']))
+            # print(cohen_kappa_score(df1_labels,df2_labels))
+            # df1['zip'] = list(zip(df1['Label'], df1['Interval']))
+            # df2['zip'] = list(zip(df2['Label'], df2['Interval']))
+            # df1_unique_val = list(df1['zip'].unique())
+            # df2_unique_val = list(df2['zip'].unique())
+            # print(len(df1_unique_val))
+            # print(len(df2_unique_val))
+            #print(cohen_kappa_score(df1))
+            # df1_neg_count = 0
+            # df1_pos_count = 0
+            # df1_neut_count = 0
+            # df2_neg_count = 0
+            # df2_pos_count = 0
+            # df2_neut_count = 0
+            # pos_ioa = 0
+            # neg_ioa = 0
+            # neut_ioa = 0
+            # for val in df1_unique_val:
+            #     if val[0] == 'negative':
+            #         df1_neg_count += 1
+            #     elif val[0] == 'positive':
+            #         df1_pos_count += 1
+            #     else:
+            #         df1_neut_count += 1
+            # for val in df2_unique_val:
+            #     if val[0] == 'negative':
+            #         df2_neg_count += 1
+            #     elif val[0] == 'positive':
+            #         df2_pos_count += 1
+            #     else:
+            #         df2_neut_count += 1
+
+            # if df1_neg_count == 0 and df2_neg_count == 0:
+            #     neg_ioa = 'N/A'
+            # elif df1_neg_count < df2_neg_count:
+            #     neg_ioa = round(df1_neg_count / df2_neg_count, 3)
+            # else:
+            #     neg_ioa = round(df2_neg_count / df1_neg_count, 3)
+
+            # if df1_pos_count == 0 and df2_pos_count == 0:
+            #     pos_ioa = 'N/A'
+            # elif df1_pos_count < df2_pos_count:
+            #     pos_ioa = round(df1_pos_count / df2_pos_count, 3)
+            # else:
+            #     pos_ioa = round(df2_pos_count / df1_pos_count, 3)
+
+            # if df1_neut_count == 0 and df2_neut_count == 0:
+            #     neut_ioa = 'N/A'
+            # elif df1_neut_count < df2_neut_count:
+            #     neut_ioa = round(df1_neut_count / df2_neut_count, 3)
+            # else:
+            #     neut_ioa = round(df2_neut_count / df1_neut_count, 3)
+
+            # count_match = sum(
+            #     val in df2_unique_val for val in df1_unique_val)
+            # total_ioa = round(
+            #     count_match / (end_interval - start_interval + 1), 3)
+            # ioa_text = "Total IOA: " + str(total_ioa) + "\n" + "Positive IOA: " + str(pos_ioa) + "\n" + "Negative IOA: " + str(neg_ioa) + \
+            #     "\n" + "Neutral IOA: " + str(neut_ioa)
+            # self.ui.textEdit_2.setText(ioa_text)
+            # fix_int = list(
+            #     sorted(set(df1_unique_val).symmetric_difference(set(df2_unique_val))))
+            # res = sorted(set(list(zip(*fix_int))[-1]))
+            # self.ui.textEdit.setText(str(res))
             # if total_ioa < float(self.ui.lineEdit_4.text()):
             #     self.ui.textEdit.setText(
             #         "fix ioa score. Recode the video together. These intervals:" + str(res))
