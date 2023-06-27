@@ -2,6 +2,7 @@ from dataclasses import replace
 from tracemalloc import start
 import pandas as pd
 import sys
+import numpy as np
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
 from PyQt5.QtWidgets import (
     QApplication, QDialog, QMainWindow, QMessageBox, QErrorMessage, QFileDialog
@@ -202,7 +203,7 @@ class Window(QMainWindow, Ui_MainWindow):
                     interval = i
                     add_row = {"Time Pressed": time_pressed,
                                "Time Released": time_released, "Label": label, "Interval": interval}
-                    df1 = df1._append(add_row, ignore_index=True)
+                    df1 = df1.append(add_row, ignore_index=True)
 
                 if i not in df2_unique_intervals:
                     time_pressed = (i-1) * 10 + 0.001
@@ -211,37 +212,80 @@ class Window(QMainWindow, Ui_MainWindow):
                     interval = i
                     add_row = {"Time Pressed": time_pressed,
                                "Time Released": time_released, "Label": label, "Interval": interval}
-                    df2 = df2._append(add_row, ignore_index=True)
+                    df2 = df2.append(add_row, ignore_index=True)
 
             df1 = df1[(df1['Interval'] >= start_interval)
                       & (df1['Interval'] <= end_interval)]
             df2 = df2[(df2['Interval'] >= start_interval)
                       & (df2['Interval'] <= end_interval)]
-            
-            df1 = df1.drop_duplicates(subset=['Label','Interval'])
-            df2 = df2.drop_duplicates(subset=['Label','Interval'])
+
+            df1 = df1.drop_duplicates(subset=['Label', 'Interval'])
+            df2 = df2.drop_duplicates(subset=['Label', 'Interval'])
 
             df1 = df1.sort_values(by=['Interval'])
             df2 = df2.sort_values(by=['Interval'])
 
+            duplicate_df1 = df1[df1.duplicated(subset="Interval", keep=False)]
+            duplicate_df1_list = sorted(duplicate_df1['Interval'].unique(
+            ))
+            df1 = df1[~df1['Interval'].isin(duplicate_df1_list)]
+            for interval in duplicate_df1_list:
+                add_row = {"Time Pressed": "N/A", "Time Released": "N/A",
+                           "Label": "p&n", "Interval": interval}
+                df1 = df1.append(add_row, ignore_index=True)
+            duplicate_df2 = df2[df2.duplicated(subset="Interval", keep=False)]
+            duplicate_df2_list = sorted(duplicate_df2['Interval'].unique(
+            ))
+            df2 = df2[~df2['Interval'].isin(duplicate_df2_list)]
+            for interval in duplicate_df2_list:
+                add_row = {"Time Pressed": "N/A", "Time Released": "N/A",
+                           "Label": "p&n", "Interval": interval}
+                df2 = df2.append(add_row, ignore_index=True)
+
+            df1 = df1.sort_values(by=['Interval'])
+            df2 = df2.sort_values(by=['Interval'])
+            print(df1)
+            print(df2)
+
             df1_labels = df1['Label'].tolist()
             df2_labels = df2['Label'].tolist()
-            
-            duplicate_df1 = df1[df1.duplicated(subset="Interval",keep=False)]
-            duplicate_df2 = df2[df2.duplicated(subset="Interval",keep=False)]
+            print(df1_labels)
+            print(df2_labels)
+            labels = ['positive', 'negative', 'neutral', 'p&n']
+            cm = confusion_matrix(df1_labels, df2_labels, labels=labels)
+            # Add 'Total' column and row to confusion matrix
+            cm_with_total = np.vstack([cm, np.sum(cm, axis=0)])
+            cm_with_total = np.column_stack(
+                [cm_with_total, np.sum(cm_with_total, axis=1)])
 
-            print(duplicate_df1)
-            print(duplicate_df2)
+            # Create a DataFrame for confusion matrix
+            df_cm = pd.DataFrame(
+                cm_with_total, index=labels+['Total'], columns=labels+['Total'])
+            print("Confusion Matrix:")
+            print(df_cm)
+            print("Cohen's kappa score:")
+            cks = cohen_kappa_score(df1_labels, df2_labels)
+            print(cks)
 
-            # print(confusion_matrix(df1_labels,df2_labels,labels=['positive','negative','neutral']))
-            # print(cohen_kappa_score(df1_labels,df2_labels))
+            self.ui.textEdit_2.setText(
+                df_cm.to_string() + "\n" + "\n" "Cohen's Kappa Score: " + str(cks))
+
+            differ_indices = [
+                (i + start_interval) for i, (x, y) in enumerate(zip(df1_labels, df2_labels)) if x != y]
+
+            # for i in differ_indices:
+            #     print(df1_labels[i-1])
+            #     print(df2_labels[i-1])
+            self.ui.textEdit.setText(
+                "Differing Intervals: " + str(differ_indices))
+
             # df1['zip'] = list(zip(df1['Label'], df1['Interval']))
             # df2['zip'] = list(zip(df2['Label'], df2['Interval']))
             # df1_unique_val = list(df1['zip'].unique())
             # df2_unique_val = list(df2['zip'].unique())
             # print(len(df1_unique_val))
             # print(len(df2_unique_val))
-            #print(cohen_kappa_score(df1))
+            # print(cohen_kappa_score(df1))
             # df1_neg_count = 0
             # df1_pos_count = 0
             # df1_neut_count = 0

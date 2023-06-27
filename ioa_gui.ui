@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>841</width>
-    <height>464</height>
+    <width>881</width>
+    <height>534</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
      <rect>
       <x>480</x>
       <y>150</y>
-      <width>261</width>
-      <height>191</height>
+      <width>371</width>
+      <height>321</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -183,8 +183,8 @@ p, li { white-space: pre-wrap; }
      <rect>
       <x>50</x>
       <y>200</y>
-      <width>271</width>
-      <height>121</height>
+      <width>411</width>
+      <height>271</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -323,7 +323,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>841</width>
+     <width>881</width>
      <height>26</height>
     </rect>
    </property>
